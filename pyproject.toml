@@ -1,0 +1,11 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "telegram_helper"
+author = "Gabriel Kabbe"
+author-email = "gabriel.kabbe@mail.de"
+home-page = "https://github.com/gab50000/TelegramHelper"
+classifiers = ["License :: OSI Approved :: MIT License"]
+requires = ["python-telegram-bot"]
