@@ -63,7 +63,7 @@ class TelegramBot:
         self.database_filename = database_filename
         logger.debug(f"Opening {self.database_filename}")
         self.database = shelve.open(database_filename, writeback=True)
-        self.authorized = self.database.setdefault("authorized", [])
+        self.authorized = self.database.setdefault("authorized", [self.admin_id])
 
         for x in dir(self):
             if not x.startswith("__"):
