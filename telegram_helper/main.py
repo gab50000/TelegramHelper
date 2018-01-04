@@ -59,7 +59,7 @@ class TelegramBot:
         self.token = token
         self.admin_id = admin_id
         if not database_filename:
-            database_filename = f"{type(self).__name}.shelve"
+            database_filename = f"{type(self).__name__}.shelve"
         self.database_filename = database_filename
         logger.debug(f"Opening {self.database_filename}")
         self.database = shelve.open(database_filename, writeback=True)
