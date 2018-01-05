@@ -8,4 +8,5 @@ author = "Gabriel Kabbe"
 author-email = "gabriel.kabbe@mail.de"
 home-page = "https://github.com/gab50000/TelegramHelper"
 classifiers = ["License :: OSI Approved :: MIT License"]
-requires = ["python-telegram-bot"]
+requires = ["python-telegram-bot", "daiquiri"]
+requires-python >= 3.6
