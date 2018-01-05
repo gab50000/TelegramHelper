@@ -43,11 +43,11 @@ def command(*command_args, **command_kwargs):
     if called_wo_args:
         fun = command_args[0]
         command_args = ()
-        logger.debug(f"{fun} was decorated without args and kwargs")
+        logger.debug("%s was decorated without args and kwargs", fun)
     def _command(func):
-        logger.debug(f"Adding command options to {func}")
-        logger.debug(f"args = {command_args}")
-        logger.debug(f"kwargs = {command_kwargs}")
+        logger.debug("Adding command options to %s", func)
+        logger.debug("args = %s", command_args)
+        logger.debug("kwargs = %s", command_kwargs)
         func._command_options = (command_args, command_kwargs)
         return func
     if called_wo_args:
@@ -74,7 +74,7 @@ class TelegramBot:
         if not database_filename:
             database_filename = f"{type(self).__name__}.shelve"
         self.database_filename = database_filename
-        logger.debug(f"Opening {self.database_filename}")
+        logger.debug("Opening %s", self.database_filename)
         self.database = shelve.open(database_filename, writeback=True)
         self.authorized = self.database.setdefault("authorized", {self.admin_id: {}})
         self.pending = self.database.setdefault("pending", set())
@@ -83,8 +83,8 @@ class TelegramBot:
             if not x.startswith("__"):
                 attr = getattr(self, x)
                 if hasattr(attr, "_command_options"):
-                    logger.debug(f"Adding {attr} to handlers")
-                    logger.debug(f"Command options: {attr._command_options}")
+                    logger.debug("Adding %s to handlers", attr)
+                    logger.debug("Command options: %s", attr._command_options)
                     self.handlers.append(CommandHandler(command=attr.__name__,
                                                         callback=attr,
                                                         *attr._command_options[0],
@@ -95,7 +95,7 @@ class TelegramBot:
             dispatcher.add_handler(h)
 
     def __del__(self):
-        logger.debug(f"Closing {self.database_filename}")
+        logger.debug("Closing %s", self.database_filename)
         self.database.close()
 
     @classmethod
@@ -118,7 +118,7 @@ class TelegramBot:
         cp = configparser.ConfigParser()
         config = cp.read(configfile)
         if not config:
-            logger.info(f"No configfile with name {configfile} was found. Creating one...")
+            logger.info("No configfile with name %s was found. Creating one...", configfile)
             for section in defaults:
                 cp.add_section(section)
                 for key in defaults[section]:
