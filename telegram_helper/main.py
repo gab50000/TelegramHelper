@@ -20,11 +20,11 @@ def partial_commandhandler():
 
 def check_id(func):
     @wraps(func)
-    def new_func(self, bot, update, **kwargs):
+    def new_func(self, bot, update, *args, **kwargs):
         requesting_id = update.message.chat_id
         if requesting_id in self.authorized:
             logger.debug("Found ID in database")
-            func(self, bot, update, **kwargs)
+            func(self, bot, update, *args, **kwargs)
         else:
             chat = update.message.chat
             warning = f"User {chat.first_name} {chat.last_name} with id " \
@@ -34,6 +34,17 @@ def check_id(func):
                 bot.send_message(chat_id=self.admin_id, text=warning)
                 self.pending[requesting_id] = {"first_name": chat.first_name,
                                                "last_name": chat.last_name}
+    return new_func
+
+
+def only_admin(func):
+    @wraps(func)
+    def new_func(self, bot, update, *args, **kwargs):
+        requesting_id = update.message.chat_id
+        if requesting_id == self.admin_id:
+            func(self, bot, update, *args, **kwargs)
+        else:
+            logger.warn("Non-admin %s tried to use command %s", requesting_id, func.__name__)
     return new_func
 
 
@@ -143,11 +154,9 @@ class TelegramBot:
         self.updater.idle()
 
     @command(pass_args=True)
+    @only_admin
     def authorize(self, bot, update, args):
         user_id = update.message.from_user.id
-        if user_id != self.admin_id:
-            logger.debug("Authorization request from non-Admin")
-            return
         if not args:
             logger.debug("No ids specified")
             return
@@ -160,4 +169,4 @@ class TelegramBot:
             name_dict = self.pending.pop(id_) if id_ in self.pending else {}
             self.authorized[id_] = name_dict
             bot.send_message(chat_id=self.admin_id, text=f"Füge id {id_} hinzu.")
-            bot.send_message(chat_id=id_, text=f"Willkommen!")
+            bot.send_message(chat_id=id_, text="Willkommen!")

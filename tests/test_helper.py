@@ -59,7 +59,7 @@ def test_authorize():
     bot = mock.Mock()
     update = mock.Mock()
     id_to_be_authorized = 5678
-    update.message.from_user.id = self.admin_id = 1234
+    update.message.chat_id = self.admin_id = 1234
     self.authorized = {}
     self.pending = {}
 
