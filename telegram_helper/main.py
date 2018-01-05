@@ -1,5 +1,4 @@
 import configparser
-from inspect import isfunction
 from functools import wraps
 import inspect
 import logging
@@ -31,7 +30,10 @@ def check_id(func):
             warning = f"User {chat.first_name} {chat.last_name} with id " \
                       f"{requesting_id} not in id list"
             logger.warning(warning)
-            bot.send_message(chat_id=self.admin_id, text=warning)
+            if requesting_id not in self.pending:
+                bot.send_message(chat_id=self.admin_id, text=warning)
+                self.pending[requesting_id] = {"first_name": chat.first_name,
+                                               "last_name": chat.last_name}
     return new_func
 
 
@@ -40,10 +42,12 @@ def command(*command_args, **command_kwargs):
     called_wo_args = len(command_args) == 1 and len(command_kwargs) == 0 and callable(command_args[0])
     if called_wo_args:
         fun = command_args[0]
-        command_args = []
+        command_args = ()
         logger.debug(f"{fun} was decorated without args and kwargs")
     def _command(func):
         logger.debug(f"Adding command options to {func}")
+        logger.debug(f"args = {command_args}")
+        logger.debug(f"kwargs = {command_kwargs}")
         func._command_options = (command_args, command_kwargs)
         return func
     if called_wo_args:
@@ -72,7 +76,8 @@ class TelegramBot:
         self.database_filename = database_filename
         logger.debug(f"Opening {self.database_filename}")
         self.database = shelve.open(database_filename, writeback=True)
-        self.authorized = self.database.setdefault("authorized", [self.admin_id])
+        self.authorized = self.database.setdefault("authorized", {self.admin_id: {}})
+        self.pending = self.database.setdefault("pending", set())
 
         for x in dir(self):
             if not x.startswith("__"):
@@ -133,10 +138,9 @@ class TelegramBot:
                 setattr(obj, k, v)
         return obj
 
-
     def run(self):
-            self.updater.start_polling()
-            self.updater.idle()
+        self.updater.start_polling()
+        self.updater.idle()
 
     @command(pass_args=True)
     def authorize(self, bot, update, args):
@@ -153,6 +157,7 @@ class TelegramBot:
             bot.send_message(chat_id=self.admin_id, text="Ungültige id")
         logger.debug("New ids: %s", new_ids)
         for id_ in new_ids:
-            self.authorized.append(id_)
+            name_dict = self.pending.pop(id_) if id_ in self.pending else {}
+            self.authorized[id_] = name_dict
             bot.send_message(chat_id=self.admin_id, text=f"Füge id {id_} hinzu.")
             bot.send_message(chat_id=id_, text=f"Willkommen!")
