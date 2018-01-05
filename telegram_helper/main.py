@@ -53,6 +53,15 @@ command.__signature__ = partial_commandhandler()
 
 
 class TelegramBot:
+    """The TelegramBot class is a simple object oriented wrapper
+    around the python-telegram-bot API.
+
+    By subclassing this class, an authentication method will be
+    available which automatically reports messages from
+    unauthenticated users to the admin.
+    Furthermore, a database (as a shelve) is set up in order to
+    store the bot state on long terms.
+    """
     def __init__(self, token, admin_id, database_filename=None):
         self.handlers = []
         self.updater = Updater(token=token)
@@ -86,6 +95,20 @@ class TelegramBot:
 
     @classmethod
     def from_configfile(cls, configfile):
+        """
+        Load values from config file.
+
+        [Telegram]
+        token: Telegram token needed as authentication
+        admin_id: Telegram id of the admin
+        database_filename: file name of the shelve in which the bot state is
+        saved
+
+        [<Bot name>]
+        If an additional section with the name of the bot is present in the
+        config file, attributes with the corresponding values will be created
+        during the bot initialization.
+        """
         defaults = {"Telegram": ["token", "admin_id", "database_filename"]}
         cp = configparser.ConfigParser()
         config = cp.read(configfile)
@@ -101,7 +124,15 @@ class TelegramBot:
         token = cp.get("Telegram", "token")
         admin_id = cp.getint("Telegram", "admin_id")
         database_filename = cp.get("Telegram", "database_filename")
-        return cls(token=token, admin_id=admin_id, database_filename=database_filename)
+
+        obj = cls(token=token, admin_id=admin_id, database_filename=database_filename)
+
+        bot_name = cls.__name__
+        if cp.has_section(bot_name):
+            for k, v in cp[bot_name].items():
+                setattr(obj, k, v)
+        return obj
+
 
     def run(self):
             self.updater.start_polling()
